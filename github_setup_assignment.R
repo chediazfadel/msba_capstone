@@ -7,4 +7,5 @@ df %>%
   ggplot() +
   geom_histogram(aes(x),
                  binwidth = 0.2,
-                 fill = "darkred", color = "white")
+                 fill = "darkred", color = "white") +
+  labs(x = "rate of return")
