@@ -9,4 +9,5 @@ df %>%
                  binwidth = 0.2,
                  fill = "darkred", color = "white") +
   stat_bin(aes(x = x, y = after_stat(count), label = ifelse(after_stat(count) == 0, "", after_stat(count))),
-             geom = "text", binwidth = 0.2, size = 5, fontface = "bold", vjust = 0)
+             geom = "text", binwidth = 0.2, size = 5, fontface = "bold", vjust = 0) +
+  theme(panel.background = element_blank())
