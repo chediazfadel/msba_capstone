@@ -1,0 +1,302 @@
+---
+title: "Capstone EDA"
+author: "Che Diaz Fadel"
+date: "2023-06-16"
+output: 
+  html_document:
+    number_sections: yes
+    toc: yes
+    theme: darkly
+    highlight: tango
+    fig_width: 15
+    fig_height: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+# Initial setup
+
+> Load packages and data, define custom functions
+
+```{r}
+# Load packages ----
+library(lemon)
+library(ggforce) 
+library(concaveman)
+library(matrixStats) 
+library(dplyr)
+library(rlang)
+library(e1071)
+library(stringi)
+library(rcompanion)
+library(lubridate)
+library(magrittr)
+library(zoo)
+library(tidyverse)
+library(xlsx)
+library(openxlsx)
+library(DBI)
+library(readxl)
+library(ggrepel)
+library(plotly)
+library(tidyxl)
+library(scales)
+library(patchwork)
+library(GGally)
+library(caret)
+
+# Set options ----
+options(tibble.print_max = 40,
+        tibble.print_min = 24,
+        width = 100,
+        pillar.min_title_chars = 15)
+
+# Custom functions/values ----
+# __ given a vector, "outlying" values >(<) 3rd(1st) quartile +(-) 1.5IQR
+soutlier <- function(x, lower = FALSE){
+  if (lower){
+    -(IQR(x, na.rm = TRUE) * 1.5) + quantile(x, names = FALSE, na.rm = TRUE)[2]
+  } else {
+    (IQR(x, na.rm = TRUE) * 1.5) + quantile(x, names = FALSE, na.rm = TRUE)[4]
+  }
+}
+
+# Load data, set column names to lower case ----
+app_test <- read_csv("data/application_test.csv") %>%
+  rename_with(~tolower(.))
+app_train <- read_csv("data/application_train.csv") %>%
+  rename_with(~tolower(.))
+bur <- read_csv("data/bureau.csv") %>%
+  rename_with(~tolower(.))
+bur_bal <- read_csv("data/bureau_balance.csv") %>%
+  rename_with(~tolower(.))
+ccb <- read_csv("data/credit_card_balance.csv") %>%
+  rename_with(~tolower(.))
+inst_pay <- read_csv("data/installments_payments.csv") %>%
+  rename_with(~tolower(.))
+pos_cash <- read_csv("data/POS_CASH_balance.csv") %>%
+  rename_with(~tolower(.))
+prev_app <- read_csv("data/previous_application.csv") %>%
+  rename_with(~tolower(.))
+table_desc <- read_csv(paste0("data/HomeCredit_columns_description.csv")) %>%
+  rename_with(~tolower(.))
+```
+
+# Basic inspection of application train data
+
+```{r}
+# app_train %>%
+#   mutate(target = factor(target, levels = c(0, 1)),
+#          across(where(is.character), ~factor(., levels = unique(.)[order(unique(.))]))) %>%
+#   summary(maxsum = 20)
+
+```
+
+## Class proportions of target variable
+
+```{r}
+table(app_train$target)
+
+table(app_train$target) %>% 
+  prop.table() %>% 
+  round(3)
+```
+Only 8.1% of individuals in train set experience payment difficulties. In other words, the no-information rate is 92% which means model accuracy will need to exceed that in order to be meaningful/useful. Special attention should also be given to model Sensitivity and Specificity. 
+
+## Scope of missing values
+
+### Rowwise completeness 
+
+```{r}
+app_train %>%
+  mutate(n_missing = rowSums(is.na(.)),
+         p_missing = n_missing/ncol(.)) %>%
+  ggplot() +
+  geom_histogram(aes(p_missing),
+                 binwidth = 0.05, fill = "darkred", color = "white") +
+  stat_bin(aes(p_missing, y = after_stat(count), label = ifelse(after_stat(count) == 0, "", after_stat(count))),
+           geom = "text", binwidth = 0.05, size = 6, fontface = "bold", vjust = 0) +
+  scale_x_continuous(breaks = seq(0,1,0.1), minor_breaks = NULL) +
+  scale_y_continuous(labels = ~paste0(.%/%1000, "k")) +
+  labs(title = "Distribution of missing values by row",
+       x = "percent missing") +
+  theme_minimal()
+```
+
+
+### Columns with most NA's
+
+```{r}
+app_train %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(everything(),
+               names_to = "col",
+               values_to = "n_missing") %>%
+  mutate(p_missing = percent(n_missing / nrow(app_train), 0.1)) %>%
+  arrange(-n_missing) %>%
+  head(20)
+```
+
+
+## Inspecting numerical variables
+
+### Class conversion
+
+There are many categorical variables in this table which are encoded numerically. With 122 total columns, it's rather arduous to distinguish true numerical variables but selecting columns that only contain numbers (and NA's) is an obvious start.
+
+```{r}
+# Ensuring data types were properly attributed during import
+app_train %>%
+  summarise(across(everything(), 
+                   list(assigned = class,
+                        observed = \(xx){
+                          case_when(grepl("^(\\d|\\.|-)+$", xx) | is.na(xx) ~ "numeric", 
+                                    .default = "character")
+                        },
+                        # get example of value
+                        vsample = ~as.character(.))) %>% 
+            first) %>%
+  # convert to long form
+  pivot_longer(everything(),
+               names_to = c("column", ".value"),
+               names_pattern = "(.*)_(.*)") 
+
+# Subset mismatches
+app_train %>%
+  summarise(across(everything(), 
+                   list(assigned = class,
+                        observed = \(xx){
+                          case_when(grepl("^(\\d|\\.|-)+$", xx) | is.na(xx) ~ "numeric", 
+                                    .default = "character")
+                        },
+                        vsample = ~as.character(.))) %>%
+            first) %>%
+  pivot_longer(everything(),
+               names_to = c("column", ".value"),
+               names_pattern = "(.*)_(.*)") %>%
+  filter(assigned != observed) 
+
+```
+
+Since no columns where misclassed during the importing process, we can move on to subsetting the numerical columns.
+
+```{r}
+app_train %>%
+  select(where(is.numeric))
+```
+
+106/122 (87%) of columns in the train set are classified as numeric so this subsetting didn't do much for us. It's unlikely that categorical variables would be encoded with decimals/doubles or negative numbers, so we can remove these for now while we look through the rest of the variables' description in the column description file.
+
+```{r}
+app_train %>%
+  # Keep only numeric columns
+  select(where(is.numeric)) %>%
+  # Convert everytyhing to character
+  mutate(across(everything(), as.character)) %>%
+  # Only keep rows without negatives or decimals
+  select(where(~ all(!grepl("\\.|-", .)))) %>%
+  colnames() %>%
+  tibble(column = .)
+```
+
+This brings us down to a much more manageable 50 columns. Further determination can be aided by the column description file. Once all categorical variables have been identified, they can be converted to factors. The new factors can easily be reconverted later if need be.
+
+```{r}
+num2fac <- app_train %>%
+  select(where(is.numeric)) %>%
+  mutate(across(everything(), as.character)) %>%
+  select(where(~ all(!grepl("\\.|-", .)))) %>%
+  select(-c(own_car_age, hour_appr_process_start, matches("^(obs|def|cnt)"))) %>%
+  colnames() 
+
+app_train1 <- app_train %>%
+  mutate(across(c(where(is.character), all_of(num2fac)), factor)) 
+
+```
+
+### Distribution and other characteristics
+
+```{r}
+app_train1 %>%
+  select(where(is.numeric)) %>%
+  summarise(across(everything(), 
+                   list(avg = ~mean(., na.rm = TRUE),
+                        med = ~median(., na.rm = TRUE),
+                        max = ~max(., na.rm = TRUE),
+                        min = ~min(., na.rm = TRUE),
+                        sd = ~sd(., na.rm = TRUE),
+                        var = ~var(., na.rm = TRUE),
+                        outupper = ~soutlier(.), # upper outlying level
+                        outlower = ~soutlier(., lower = TRUE))) %>% # lower outlying level
+              round(2)) %>%
+  pivot_longer(everything(),
+               names_to = c("column", ".value"),
+               names_pattern = "(.*)_(.*)")
+
+```
+
+
+# Addressing problematic columns
+
+Some missing values in `code_gender` and `organization_type` were encoded with the string `XNA` instead of being explicitly missing. 
+
+```{r}
+unique(app_train1$code_gender)
+unique(app_train1$organization_type)
+```
+
+This can be fixed with the following:
+
+```{r}
+app_train1 %>%
+  select(code_gender, organization_type) %>%
+  mutate(across(c(code_gender, organization_type), 
+                ~case_when(. != "XNA" ~ .))) %>% # Fix occurs here
+  sapply(., unique) %>% # Displaying the results 
+  tibble(cols = names(.),
+         val = .) %>%
+  unnest(val) %>%
+  arrange()
+  
+```
+`days_employed` contains some erroneous values. Most values of `days_employed` are negative and yield reasonable values when converted to positive years with $\left( x \div 365 \right) \times -1$ but those beginning > 0 equate to less than -1,000 years. What's more is that all of the values greater than 0 equal 365243. It's possible that this number may be used as a factor to calculate time or define a time interval. 365 (days) 24 (hours) 3 (?) is rather coincidental.
+
+```{r}
+# Maximum is extremely large and mean is greater than 3rd quartile
+app_train1$days_employed %>%
+  summary
+
+# All values > 0 equal 365243
+app_train1 %>%
+  filter(days_employed > 0) %>%
+  select(days_employed) %>%
+  summary
+
+# days_employed converted to years
+app_train1 %>%
+  select(days_employed) %>%
+  mutate(year_conv = round((days_employed / 365) * -1, 2)) %>%
+  head(10)
+
+```
+
+This can be solved with the following:
+
+```{r}
+app_train1 %>%
+  mutate(days_employed = case_when(days_employed <= 0 ~ days_employed))
+```
+
+Time to repair all 3 variables, and update the data frame.
+
+```{r}
+app_train2 <- app_train1 %>%
+  mutate(across(c(code_gender, organization_type), 
+                ~case_when(. != "XNA" ~ .)),
+         days_employed = case_when(days_employed <= 0 ~ days_employed))
+  
+```
+
