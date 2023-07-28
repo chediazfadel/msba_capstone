@@ -142,7 +142,7 @@ app_train %>%
   theme_minimal()
 ```
 
-![](EDA_figs/EDA_unnamed-chunk-4-1.png)<!-- -->
+![](RMarkdown/EDA_figs/EDA_unnamed-chunk-4-1.png)<!-- -->
 
 
 ### Columns with most NA's
