@@ -13,10 +13,7 @@ output:
     fig_height: 10
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
-                      fig.path = "Modeling_figs/Modeling_")
-```
+
 
 # Support Vector Machine
 
@@ -26,7 +23,8 @@ Support Vector Machine (SVM) seemed like a favorable candidate given it’s high
 
 > Load packages and data, define custom functions
 
-```{r}
+
+```r
 # Load packages 
 library(caret)
 library(kernlab)
@@ -52,7 +50,8 @@ desired_columns <- read_csv("../data/desired_columns.csv") # DF of handpicked fe
 
 We decided as a group to use the same dataset when developing our models in order to make apples-to-apples comparisons when determining the best model and features. Below is the standardization I provided and that was used by the group. 2 aggregations of the *bureau.csv* data were provided but ultimately we decided to use `bureau_agg_b`.
 
-```{r eval=FALSE}
+
+```r
 # Identify numerically encoded categorical variables ----
 num2fac <- app_train %>%
   select(where(is.numeric)) %>%
@@ -143,14 +142,16 @@ remove(app_train, bureau_agg_a, bureau_agg_b, bureau_df, desired_columns, num2fa
 
 # Data Preparation
 
-```{r}
+
+```r
 # Importing specific output for dislpay to reduce notebook runtime
 fe_cvcomp1 <- readRDS("../data/fe_cvcomp1.RDS")
 svm_final_confmat <- readRDS("../data/svm_final_confmat.RDS")
 ```
 
 
-```{r eval = FALSE}
+
+```r
 # Trimming data 
 app_train3 <- app_train2 %>%
   rename_with(tolower) %>%
@@ -229,7 +230,8 @@ kernlab provides the most popular kernel functions which can be used by setting 
 -   `seed`: integer, random seed passed to `set.seed`.\
 -   `give.model`: logical, should model object be returned?\ 
 
-```{r}
+
+```r
 ksvm_cv <- \(df, tv, kern, c = 1, n_folds = 1, seed = 123, give.model = TRUE){
   # if n_folds <= 1, don't return cv performance tibble
   if (n_folds > 1) {
@@ -293,7 +295,8 @@ ksvm_cv <- \(df, tv, kern, c = 1, n_folds = 1, seed = 123, give.model = TRUE){
 
 Given the scale of the data, it was crucial to train using parallel processing. I used `foreach` from the `parallel` package to accomplish this.
 
-```{r, eval=FALSE}
+
+```r
 # Parameter grid for two different kernels
 kgrid <- expand.grid(kernel = c("polydot"),
                      C = c(0.01, 2, 3)) %>%
@@ -335,15 +338,41 @@ fe_cvcomp1 <- fe_cvcomp %>%
          .after = sec) 
 ```
 
-```{r}
+
+```r
 fe_cvcomp1
+```
+
+```
+## # A tibble: 16 × 17
+##    kernel     C   sec  mins stat  Accuracy Sensitivity Specificity `Pos Pred Value` `Neg Pred Value`
+##    <chr>  <dbl> <dbl> <dbl> <chr>    <dbl>       <dbl>       <dbl>            <dbl>            <dbl>
+##  1 polyd…  1e-2 2265. 37.7  avg   0.660       0.689        0.321           0.922              0.0815
+##  2 polyd…  1e-2 2265. 37.7  sd    0.0924      0.109        0.110           0.00359            0.0104
+##  3 polyd…  2e+0 2373. 39.6  avg   0.712       0.755        0.213           0.918              0.0623
+##  4 polyd…  2e+0 2373. 39.6  sd    0.127       0.150        0.140           0.00189            0.0163
+##  5 polyd…  3e+0 2392. 39.9  avg   0.638       0.662        0.360           0.922              0.0882
+##  6 polyd…  3e+0 2392. 39.9  sd    0.169       0.197        0.164           0.00770            0.0133
+##  7 rbfdot  1e+0  305.  5.09 avg   0.921       1            0               0.921            NaN     
+##  8 rbfdot  1e+0  305.  5.09 sd    0.000112    0            0               0.000112          NA     
+##  9 rbfdot  5e+0  490.  8.17 avg   0.921       0.999        0.00127         0.921              0.117 
+## 10 rbfdot  5e+0  490.  8.17 sd    0.000209    0.000192     0.00173         0.000195           0.162 
+## 11 rbfdot  2e+1  563.  9.38 avg   0.918       0.997        0.00127         0.921              0.0356
+## 12 rbfdot  2e+1  563.  9.38 sd    0.000671    0.000654     0.00173         0.000214           0.0512
+## 13 rbfdot  6e+1  673. 11.2  avg   0.916       0.994        0.00443         0.921              0.0596
+## 14 rbfdot  6e+1  673. 11.2  sd    0.000975    0.000783     0.00480         0.000445           0.0651
+## 15 rbfdot  2e+2  876. 14.6  avg   0.912       0.989        0.0101          0.921              0.0754
+## 16 rbfdot  2e+2  876. 14.6  sd    0.00194     0.00217      0.00347         0.000337           0.0238
+## # ℹ 7 more variables: Precision <dbl>, Recall <dbl>, F1 <dbl>, Prevalence <dbl>,
+## #   `Detection Rate` <dbl>, `Detection Prevalence` <dbl>, `Balanced Accuracy` <dbl>
 ```
 
 ## 8 Fold Majority Class Classifier
 
 Through the tuning process, I learned very quickly that SVM is very computationally expensive. To solve this I cut the train set into 8 folds, made 8 models and predictions and the majority prediction became the final prediction. In the case of a tie, the prediction is set to 0 since it's the majority class for the dataset.
 
-```{r eval = FALSE}
+
+```r
 # Make folds
 set.seed(123)
 train_folds <- createFolds(xtrain$target, 8)
@@ -383,18 +412,48 @@ final_preds <- tibble(x1 = names(mmc),
                           .default = 1),
          sk_id_curr = test_sk_id_curr) %>%
   select(sk_id_curr, pred)
-
-
 ```
 
 # Model Performance
 
-```{r eval = FALSE}
+
+```r
 svm_final_confmat <- confusionMatrix(factor(final_preds$pred), xtest$target)
 ```
 
 Given the business case, it seems wise to optimize around maximizing Specificity (if target class = 0) since the cost of default likely far exceeds the opportunity cost of a new customer. This model finished with an unimpressive 86.3% accuracy and a surprisingly hard to achieve 9.75% Specificity.
 
-```{r}
+
+```r
 svm_final_confmat
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction     0     1
+##          0 45041  3677
+##          1  3516   397
+##                                           
+##                Accuracy : 0.8633          
+##                  95% CI : (0.8604, 0.8663)
+##     No Information Rate : 0.9226          
+##     P-Value [Acc > NIR] : 1.00000         
+##                                           
+##                   Kappa : 0.0255          
+##                                           
+##  Mcnemar's Test P-Value : 0.05922         
+##                                           
+##             Sensitivity : 0.92759         
+##             Specificity : 0.09745         
+##          Pos Pred Value : 0.92452         
+##          Neg Pred Value : 0.10146         
+##              Prevalence : 0.92259         
+##          Detection Rate : 0.85579         
+##    Detection Prevalence : 0.92565         
+##       Balanced Accuracy : 0.51252         
+##                                           
+##        'Positive' Class : 0               
+## 
 ```
