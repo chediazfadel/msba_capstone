@@ -1,51 +1,20 @@
-## Developer Portfolio Landing Page Template
+## University of Utah MSBA Summer 2023 Capstone
 
-### Introduction
+### Busines Problem and Project Objective
 
-Use this template if you need a quick developer / data science portfolio! Based on a Minimal Jekyll theme for GitHub Pages.
+Home Credit is interested in augmenting its customer base to those without existing credit history. Bringing on this population bears associated risks, namely the uncertainty of a potential customer’s ability to repay loans offered by Home Credit. This project aims to minimize the onboarding of customers who will default on their loans by leveraging the transactional data collected by Home Credit. This will be done by employing a supervised classification model designed to maximize overall accuracy, and accuracy relative to the “no information rate” (the proportion of the most prevalent class).
 
-<img src="images/demo.gif?raw=true"/>
+Being able to swiftly and accurately identify which prospects to avoid will decrease customer onboarding costs and increase overall profitability of accounts. Home Credit will be able to streamline acquisition of favorable customers with fewer resources.
 
-### Installation
+The materials delivered will be a model which accepts a list of prospective customers and their associated data, and outputs whether each prospect should be offered a loan. This project will be facilitated by a predefined group of University of Utah MSBA students and consists of two key milestones: exploratory data analysis and modelling. Progress of these milestones will be reported by June 18th, 2023 and July 9th, 2023 respectively. We intend to deliver final materials by July 26th, 2023.
 
-See full step by step tutorial [on Medium](https://medium.com/@evanca/set-up-your-portfolio-website-in-less-than-10-minutes-with-github-pages-d0efa8ff56fd).
-___
+### Group Solution
 
-You can use the editor on GitHub to maintain and preview the content for your website in Markdown files.
+### Personal Contribution
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Business Value
 
-### Markdown
+### Difficulties
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### What Was Learned
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Roadmap
-
-See the [open issues](https://github.com/evanca/quick-portfolio/issues) for a list of proposed features (and known issues).
-___
-
-### References
-
-[1] Jekyll theme "Minimal" for GitHub Pages: https://github.com/pages-themes/minimal (CC0 1.0 Universal License)
-<br>[2] Dummy photo via: https://pixabay.com/photos/man-male-adult-person-caucasian-1209494/ (Pixabay License)
-<br>[3] Dummy thumbnail image created by rawpixel.com: https://www.freepik.com/free-vector/set-elements-infographic_2807573.htm (Standard Freepik License)
