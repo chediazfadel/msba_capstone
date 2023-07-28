@@ -1,5 +1,5 @@
 # **<ins>University of Utah MSBA Summer 2023 Capstone</ins>** 
-[![](https://img.shields.io/badge/R-Project_Repository-276DC3?logo=R)](https://github.com/chediazfadel/msba_capstone)
+[![](https://img.shields.io/badge/R-RMarkdown_Notebooks-276DC3?logo=R)](https://github.com/chediazfadel/msba_capstone/tree/main/RMarkdown) [![](https://img.shields.io/badge/R-HTML_Notebooks-276DC3?logo=R)](https://github.com/chediazfadel/msba_capstone/tree/main/HTML)
 
 ## Business Problem and Project Objective
 
