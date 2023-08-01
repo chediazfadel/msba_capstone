@@ -23,13 +23,13 @@ We selected XGBoost for our final model given its balance between our chosen per
 - External Source (2, 3)
   - The top two performing features were nondescript metrics created by a source outside Home Credit.
 - Duration client has been employed.
-- Number of days before application the client change their registration.
+- Number of days before application the client changed their registration.
 - Client age.
 
 
 ## Personal Contribution
 ### Data standardization
-The entire dataset consists of seven tables, totaling 219 variables, and the primary training dataset contains 307,511 observations. Given our time and computational constraints, trimming and cleaning the data down into a manageable form was critical. We also wanted to use the same data to train each of our models for compatibility  purposes and to be able to make apples-to-apples model performance comparisons. I provided this standardized set to the group for modeling by distilling aspects of our individual EDA's into a single simplified script that could be easily shared.
+The entire dataset consists of seven tables, totaling 219 variables, and the primary training dataset contains 307,511 observations. Given our time and computational constraints, trimming and cleaning the data down into a manageable form was critical. We also wanted to use the same data to train each of our models for compatibility purposes and to be able to make apples-to-apples model performance comparisons. I provided this standardized set to the group for modeling by distilling aspects of our individual EDA's into a single simplified script that could be easily shared.
 
 ### EDA [![](https://img.shields.io/badge/R-EDA-276DC3?logo=R)](https://github.com/chediazfadel/msba_capstone/blob/main/EDA-chediazfadel.md)
 
@@ -46,18 +46,20 @@ My final SVM model was not very predictive and making improvements in each itera
 ## Business Value
 While the final model we presented on can certainly be improved upon, there is still some value to be gleaned from it. 
 
-Based on the most predictive features, it's clear that it would be worth while for Home Credit to get access to more resources from the "External Source". In reality, I have no idea how realistic this prospect is but it is worth an attempt anyway. The final XGB model boasted a 19.5% Specificity (positive class = difficulty repaying) meaning that compared to a model which simply predicts the majority class, our model could provide Home Credit with a 19.5% average reduction in lending risk. Based on the average credit amount and average normalized interest rate of those found in the data to have difficulty repaying their loans, this equates to about $44,960 in average loss reduction per client.
+Based on the most predictive features, it's clear that it would be worthwhile for Home Credit to get access to more resources from the "External Source". In reality, I have no idea how realistic this prospect is but it is worth an attempt anyway. The other most important features are measures many would expect in credit worthiness evaluations like age and employment duration. I believe this should signal to Home Credit that certain conventional metrics shouldn't be overlooked. 
+
+The final XGB model boasted a 19.5% Sensitivity (positive class = difficulty repaying) meaning that compared to a model which simply predicts the majority class, our model could provide Home Credit with a 19.5% average reduction in lending risk. Based on the average credit amount and average normalized interest rate of those found in the data to have difficulty repaying their loans, this equates to about $44,960 in average loss reduction per client.
 
 $$ AVG Credit = C = 193915$$
 
-$$ AVG Interest Rate = R = 193915$$
+$$ AVG Interest Rate = R = 0.189$$
 
-$$ Specificity = TPR = 0.195$$
+$$ Sensitivity = TPR = 0.195$$
 
 $$ Average Loss Reduction Per Client = \Bigl(C \times \left(1 + R\right)\Bigr) \times TPR$$
 
 ## Difficulties
-The depth and breadth of this data was massive. Cleaning and validating alone proved to be fairly complex, especially since in my opinion the provided data descriptions left much to be desired. These hardships paled in comparison to the time it took to train models. After attempting a "everything but the kitchen sink" approach to feature selection and hyperparameter tuning and still not having a model after 24+ hours, it was clear a more nuanced approach was required. Even training on what seemed to be the minimally acceptable amount of variables and hyperparamters took considerable time and seriously limited our ability to experiment with new methods, combinations of features, and paramater grids after evaluation.
+The depth and breadth of this data was massive. Cleaning and validating alone proved to be fairly complex, especially since in my opinion the provided data descriptions left much to be desired. These hardships paled in comparison to the time it took to train models. After attempting a "everything but the kitchen sink" approach to feature selection and hyperparameter tuning and still not having a model after 24+ hours, it was clear a more nuanced approach was required. Even training on what seemed to be the minimally acceptable amount of variables and hyperparameters took considerable time and seriously limited our ability to experiment with new methods, combinations of features, and parameter grids after evaluation. Based on the ultimate performance of our models, I believe it's clear that we were not able to fully overcome these hardships but valuable experience was gained nonetheless.
 
 ## What Was Learned
 
